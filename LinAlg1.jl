@@ -15,7 +15,7 @@ macro bind(def, element)
 end
 
 # ╔═╡ b32845e0-6e0b-11ec-0002-0f114cc2ffcd
-using Plots, PlutoUI, LinearAlgebra, Distributions, StatsBase
+using Plots, PlutoUI, LinearAlgebra, Distributions, StatsBase, LaTeXStrings, WAV
 
 # ╔═╡ 88a4519b-f415-455b-b002-107ac8d2f5e4
 begin
@@ -66,20 +66,346 @@ md""" # Linear Algebra Day 1
 md""" ## A Motivating Question 
 These spike trains represent recordings from monkey motor cortex during a reaching task. 
 \
-**What is the angle between the reaches in these two trials**?
+**What is the angle between the reaches in each of these two trials**?
+\
+$(Resource("https://github.com/lbreston/MFCN-2022/blob/main/artifacts/monkeyreach.jpg?raw=true", :width => 200))
+
 """
 
-# ╔═╡ 7b96555a-cd93-4611-8630-325292778ef5
- Resource("https://github.com/lbreston/MFCN-2022/blob/main/artifacts/monkeyreach.png")
+# ╔═╡ 25a9ce74-3079-4041-b93d-dcb4f85c9a12
+md""" ## A More Fundamental Question 
+How do we even start to do math with non-numbers?"""
 
-# ╔═╡ ba29ad49-66d5-49ef-906b-81e743c0071b
-TwoColumn(md"Note the kink at ``x=0``!", plot(-5:5, abs))
+# ╔═╡ 0388e1ba-10c0-458f-a4ca-ea19859d5f55
+md"""## What is a number?
+- A number is a representation of amount or quantity i.e. the scale
+- we can do arithmetic with them
+- they can be described by only one element 
+- to generalize we'll define number like things to be **scalars**
+"""
 
-# ╔═╡ f04e9fc4-b47c-499c-ba01-7980db2e2ea8
-normalize([1 1 1])
+# ╔═╡ 614bdaa3-b61b-4105-9676-e1d66838c323
+md"""## From numbers to vectors
+- Origin in Geometry
+- Idea of vectors was introduced to account for both magnitude AND direction
+- Generalized by Descartes
+- Realized "direction" could be generalized to represent almost any property
+"""
 
-# ╔═╡ 6b2ade46-c69b-4c20-aa71-7ded153ce950
-Int.(rand(Bernoulli(.5),100))
+
+# ╔═╡ 5811e125-15bf-454d-b49b-5ad41d7c6251
+begin	
+	v1_slider = @bind v1 Slider(-2:0.1:2, default=1, show_value=false)
+	v2_slider = @bind v2 Slider(-2:0.1:2, default=1, show_value=false)
+	
+
+	md"""**Vectors in $\mathbb{R}^2$**
+	
+	`v1` = $(v1_slider) `v2` = $(v2_slider)
+	
+	"""
+end
+
+# ╔═╡ 1107d3d3-d031-4c81-9de4-74d74b06acdb
+let
+	
+	lims = (
+		-2,
+		 2
+	)
+	
+
+	scatter([0], [0], xlims = lims, ylims = lims, legend = false,   aspect_ratio=:equal, 
+		title = latexstring("Vectors\\ in\\ \\mathbb{R}^2")) 
+
+	quiver!([0], [0], quiver = ([v1],[0]), color = [:blue],linewidth=2)
+	
+	quiver!( [0], [0], quiver = ([0],[v2]), color = [:orange],linewidth=2)
+	
+	quiver!([0], [0], quiver = ([v1],[v2]), color = [:black],linewidth=2)
+	
+	quiver!([0], [v2], quiver = ([v1],[0]), color = [:blue],linewidth=1,linestyle=:dash)
+	
+	quiver!( [v1], [0], quiver = ([0],[v2]), color =[:orange],linewidth=1,linestyle=:dash)
+	
+end
+
+# ╔═╡ 902164ef-0a58-4510-8769-d9e35fd3f530
+md"""**Color Vectors**"""
+
+# ╔═╡ 3b0ed07c-bdfd-4e78-9a50-a053c7f4f4e6
+ColorVectors=(RGB(1,0,0),RGB(0,1,0),RGB(0,0,1))
+
+# ╔═╡ fe7bf21d-539c-4bb5-be07-26621ead740d
+begin	
+	c1_slider = @bind c_1 Slider(-1:0.01:1, default=.9, show_value=true)
+	c2_slider = @bind c_2 Slider(-1:0.01:1, default=.8, show_value=true)
+	c3_slider = @bind c_3 Slider(-1:0.01:1, default=.8, show_value=true)
+	
+	
+
+	md"""**Color Vectors**
+	
+	`C_1` = $(c1_slider) `C_2` = $(c2_slider) `C_3` = $(c3_slider) 
+	
+	"""
+end
+
+# ╔═╡ 266a6922-1aaa-4f41-b13a-1cc2b4213747
+begin
+	showspan = @bind sspan CheckBox(default=false)
+	md""" Show Span $(showspan)"""
+end
+
+# ╔═╡ dc106d6a-d60f-40fe-a811-f360c06afb88
+md"""**music vectors**"""
+
+# ╔═╡ c525cc41-a666-4562-ab9e-affd3287cea9
+begin
+	struct Tone
+		wave
+	end
+	
+	function Tone(f::Number)
+		Tone(genwave(f))
+	end
+
+	function Base.:+(s1::Tone,s2::Tone)
+		Tone(s1.wave.+s2.wave)
+	end
+	
+	function Base.:*(s::Tone,a::Real)
+		Tone(a*s.wave)
+	end
+	
+	function Base.:*(a::Real,s::Tone)
+		Tone(a*s.wave)
+	end
+	
+	function plottone(s::Tone)
+		plot(s.wave[1:60000],legend=false)
+	end
+	
+	function play(s::Tone)
+		wavplay(s.wave,20e3)
+	end
+	
+	function genwave(f)
+	fs = 20e3
+	t = 0.0:1/fs:prevfloat(6.0)
+	y = sin.(2pi * f * t) * 0.2
+	end
+	
+end
+
+# ╔═╡ 91f3348f-e1f2-4eec-8431-5adb81c2c2aa
+begin
+	s = [string(v1), string(v2)]
+	pad = maximum([4, maximum(map(length,s))])
+	for i=1:length(s)
+		s[i] = " "^(pad - length(s[i])) * s[i]
+	end
+	
+	top = join("V = [$(s[1])]")
+	bot = join("    [$(s[2])]")
+	Text(join([top, bot], "\n"))	
+end
+
+# ╔═╡ 6d838d17-ccaf-4009-8a12-057a11faf896
+c_1*ColorVectors[1]+c_2*ColorVectors[2]+c_3*ColorVectors[3]
+
+# ╔═╡ 24062396-0403-4ea2-87de-c2b22d6f0e28
+colorpts=vcat([i*ColorVectors[1]+j*ColorVectors[2]+k*ColorVectors[3] for i=0:.05:1, j=0:.05:1,k=0:.05:1]...);
+
+# ╔═╡ 61f52b52-9706-4332-8f67-40be8af4a240
+begin
+	
+	if sspan
+		gr()
+ 		scatter(map(x->x.r,colorpts),map(x->x.g,colorpts), map(x->x.b,colorpts),color=colorpts,colorbar=false,legend=false)
+	end
+
+end
+
+
+# ╔═╡ 456734f1-872f-4d42-aaa2-eed8b9df6919
+begin
+
+	C=Tone(261.6256)
+	D=Tone(293.6648)
+	E=Tone(329.6276)
+	F=Tone(349.2282)
+	G=Tone(391.9954)
+	A=Tone(440.0000)
+	B=Tone(493.8833)
+	
+	C_slider = @bind c Slider(0:.1:1, default=1, show_value=false)
+	D_slider = @bind d Slider(0:0.1:1, default=0, show_value=false)
+	E_slider = @bind e Slider(0:0.1:1, default=1, show_value=false)
+	F_slider = @bind f Slider(0:0.1:1, default=0, show_value=false)
+	G_slider = @bind g Slider(0:0.1:1, default=1, show_value=false)
+	A_slider = @bind a Slider(0:0.1:1, default=0, show_value=false)
+	B_slider = @bind b Slider(0:0.1:1, default=0, show_value=false)
+	
+	playbutton = @bind playbtn CheckBox(default=false)
+	
+	
+	md"""
+	
+	`C` = $(C_slider) `D` = $(D_slider) `E` = $(E_slider) `F` = $(F_slider)\
+	 `G` = $(G_slider) `A` = $(A_slider) `B` = $(B_slider)\
+	 Play $(playbutton)
+	
+	"""
+end
+
+# ╔═╡ 71f9be86-f953-44ba-bcea-4bde8d74f6c8
+begin
+	gr()
+	Chord=c*C+d*D+e*E+f*F+g*G+a*A+b*B
+	plottone(Chord)
+end
+
+# ╔═╡ 97fc8d89-b315-43c4-987e-245eb909beca
+md""" **2-D Linear Transformations**"""
+
+# ╔═╡ c3f434f2-ae12-415a-a9a0-2282401abcc4
+begin
+	showeig = @bind seig CheckBox(default=false)
+	md""" Show Eigenvectors $(showeig)"""
+end
+
+# ╔═╡ 933a85e4-5fca-4f89-af94-92b353791ea6
+begin
+	
+	function scale(k::Number)
+		[k 0; 0 k]
+	end
+	
+	function scale(k1::Number,k2::Number)
+		[k1 0; 0 k2]
+	end
+	
+	function rotate(θ::Number)
+		round.([cos(θ) -sin(θ); sin(θ) cos(θ)],digits=3)
+	end
+	
+	function shear(k1::Number,k2::Number)
+		[1 k1; k2 1]
+	end
+	
+	function reflect(l::Vector)
+		(1/norm(l)^2)*[l[1]^2-l[2]^2 2*l[1]*l[2]; 2*l[1]*l[2] l[2]^2-l[1]^2]
+	end
+	
+	function project(u::Vector)
+		(1/norm(u)^2)*[u[1]^2 u[1]*u[2]; u[1]*u[2] u[2]^2]
+	end
+
+end
+
+# ╔═╡ 7781b837-4651-4cac-9a5c-52bcc9fa576b
+T=rotate(pi/2)
+
+# ╔═╡ 778651c3-a323-4f7f-b99d-5124f86cc1f8
+function hyperbolic(x)
+	[log.(sqrt.(x[1,:]./x[2,:]))';sqrt.(x[1,:].*x[2,:])']
+end
+
+# ╔═╡ d6b8a882-8489-4307-9703-6038de351182
+	function hline(y,xlims,numpts)
+		X=reshape(collect(range(xlims[1], xlims[2], length=numpts)),1,numpts)
+		Y=y*ones(1,numpts)
+		return vcat(X,Y)
+	end
+
+# ╔═╡ 03ea6d04-af87-43ac-9306-0382215bb836
+
+	function vline(x,ylims,numpts)
+		X=x*ones(1,numpts)
+		Y=reshape(collect(range(ylims[1], ylims[2], length=numpts)),1,numpts)
+		return vcat(X,Y)
+	end
+
+# ╔═╡ 12d7dbc0-3df8-487d-9fe8-b9b33b0483ed
+begin
+	
+	mutable struct Grid
+		gridlines
+	end
+	
+	function Grid(xlim,ylim,numpts)
+		hlines=[hline(i,xlim,numpts) for i = ylim[1]:1:ceil(ylim[2])]
+		vlines=[vline(i,ylim,numpts) for i = xlim[1]:1:ceil(xlim[2])]
+		glines=vcat(hlines,vlines)
+		Grid(glines)
+	end
+	
+	function Grid(lim::Number,numpts)
+		xlim=(-lim,lim)
+		ylim=(-lim,lim)
+		hlines=[hline(i,xlim,numpts) for i = floor(ylim[1]):1:ceil(ylim[2])]
+		vlines=[vline(i,ylim,numpts) for i = floor(xlim[1]):1:ceil(xlim[2])]
+		glines=vcat(hlines,vlines)
+		Grid(glines)
+	end
+	
+	function transform!(G::Grid,f::Function)
+		G.gridlines=map(x->f(x),G.gridlines)
+	end
+	
+	function transform!(G::Grid,M::Matrix)
+		G.gridlines=map(x->M*x,G.gridlines)
+	end
+	
+	function plotgrid(G::Grid)
+		plot(hcat(map(x->x[1,:],G.gridlines)...),hcat(map(x->x[2,:],G.gridlines)...),color=:grey)
+	end
+	
+	function plotgrid!(G::Grid)
+		plot!(hcat(map(x->x[1,:],G.gridlines)...),hcat(map(x->x[2,:],G.gridlines)...),color=:grey2,linewidth=.5)
+	end
+	
+
+end
+
+# ╔═╡ 387e458a-5a07-4868-bf4c-bcae41dfc5f5
+begin
+	
+	G1=Grid(10,2)
+	
+	transform!(G1,T)
+	
+	evt=eigvecs(T)
+		
+	evv=eigvals(T)
+	
+	lims = (
+		-3,
+		 3
+	)
+	
+	S=scatter([0], [0], xlims = lims, ylims = lims, legend = false,   aspect_ratio=:equal) 
+	
+	plotgrid!(G1)
+
+	quiver!([0], [0], quiver = ([T[1,1]],[T[2,1]]), color = [:blue],linewidth=2)
+	
+	quiver!( [0], [0], quiver = ([T[1,2]],[T[2,2]]), color = [:orange],linewidth=2)
+	
+	if seig
+		if isa(evv[1],Real)
+		quiver!([0], [0], quiver = ([evt[1,1]],[evt[2,1]]), color = [:red],linewidth=2)
+		end
+		if isa(evv[2],Real)
+		quiver!( [0], [0], quiver = ([evt[1,2]],[evt[2,2]]), color = [:green],linewidth=2)
+		end
+	end
+	
+	plot(S)
+	
+	
+end
 
 # ╔═╡ b3f2fff2-1afb-40ad-9c6f-d1f632f0d0c5
 begin 
@@ -118,7 +444,7 @@ begin
 end
 
 # ╔═╡ d4ade6ee-4cb5-48e9-9b08-440df38c1099
-function spikerate(N; center=false)
+function spikerate(N; center=false, norm=false)
 	if isempty(N.spikes)
 		return 0
 	end
@@ -126,14 +452,17 @@ function spikerate(N; center=false)
 	if center
 		λ=λ-N.λ₀/2
 	end
+	if norm
+		λ=λ/N.λ₀
+	end
 	return λ
 end
 
 # ╔═╡ f2384175-9dc5-4b0f-af7f-14555d57e5b8
 begin
-	function spikeraster(P)
+	function spikeraster(P, kwargs...)
 		n=P.neurons 
-		s = scatter(n[1].spikes, fill(n[1].id, size(n[1].spikes)), marker=:vline, 	color = :black, markersize=12, legend = false, xlabel = "Time", ylabel ="Neuron", grid=false)
+		s = scatter(n[1].spikes, fill(n[1].id, size(n[1].spikes)), marker=:vline, 	color = :black, markersize=12, legend = false, xlabel = "Time", ylabel ="Neuron", grid=false; kwargs...)
 		for i ∈ 2:length(n)
 			scatter!(n[i].spikes, fill(n[i].id, size(n[i].spikes)), marker=:vline, color = :black, markersize=12)
 		end
@@ -179,26 +508,27 @@ end
 		
 
 # ╔═╡ 19784849-e55c-48d8-8ddf-1276b77e0da3
+begin
+	p1=Population(8, 50)
+	stimulate!(p1, [1 1 1], 0:.01:1)
+	pl1=spikeraster(p1)
+	title!("Trial 1")
+	stimulate!(p1, [1 0 0], 0:.01:1)
+	pl2=spikeraster(p1)
+	title!("Trial 2")
+	plot(pl1,pl2)
+end
 
-TwoColumn( Resource("https://github.com/lbreston/MFCN-2022/blob/main/artifacts/monkeyreach.png"), let
-												p1=Population(8, 50)
-												stimulate!(p1, [1 1 1], 0:.01:1)
-												pl1=spikeraster(p1)
-												stimulate!(p1, [1 0 0], 0:.01:1)
-												pl2=spikeraster(p1)
-												plot(pl1,pl2)
-											end
-)
 
-
-# ╔═╡ d8adafcf-ec8e-4647-bb4d-10eafb06e108
-mke.set_theme!()
 
 # ╔═╡ b64a2fb8-67e3-4c6a-b32a-65ea127820b3
 p=Population(8, 50)
 
-# ╔═╡ 1bcbcc8d-4691-475b-9cf5-e03dfc4a5327
-spikerate(p.neurons[1]; center=true)
+# ╔═╡ a1750610-34ed-4976-b3c8-535f192d1d7f
+
+
+# ╔═╡ e8992b80-e759-414e-92ab-cb1edc123ff5
+
 
 # ╔═╡ eacdd4d7-bfae-4d9e-b4f6-603c7f2f1ff5
 stimulate!(p, [1,1,1], 0:.01:1)
@@ -210,29 +540,33 @@ spikeraster(p)
 
 showbasis(p)
 
-# ╔═╡ 6b0b3ab1-4eef-4c3f-b61b-062e1d703b1d
-c1_slider = @bind c_1 PlutoUI.confirm(PlutoUI.Slider(-1:0.01:1, default=.9, show_value=true))
-
 # ╔═╡ 87f9da53-d498-4991-b3d2-fa50397706f7
-showvec([c_1, 1.0, 1.0])
+showvec([1.0, 1.0, 1.0])
+
+# ╔═╡ 34e418ae-1c0a-45a5-8120-3e00ae1214ca
+
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
 
 [compat]
 Distributions = "~0.25.37"
 JSServe = "~1.2.3"
+LaTeXStrings = "~1.3.0"
 Plots = "~1.25.4"
 PlutoUI = "~0.7.27"
 StatsBase = "~0.33.14"
+WAV = "~1.2.0"
 WGLMakie = "~0.4.7"
 """
 
@@ -1361,6 +1695,12 @@ git-tree-sha1 = "34db80951901073501137bdbc3d5a8e7bbd06670"
 uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
 version = "0.1.2"
 
+[[deps.WAV]]
+deps = ["Base64", "FileIO", "Libdl", "Logging"]
+git-tree-sha1 = "7e7e1b4686995aaf4ecaaf52f6cd824fa6bd6aa5"
+uuid = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
+version = "1.2.0"
+
 [[deps.WGLMakie]]
 deps = ["Colors", "FileIO", "FreeTypeAbstraction", "GeometryBasics", "Hyperscript", "ImageMagick", "JSServe", "LinearAlgebra", "Makie", "Observables", "ShaderAbstractions", "StaticArrays"]
 git-tree-sha1 = "716e15ba27090a96c2f3afc16a464c9a280089cd"
@@ -1608,29 +1948,51 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╠═b32845e0-6e0b-11ec-0002-0f114cc2ffcd
-# ╠═88a4519b-f415-455b-b002-107ac8d2f5e4
-# ╠═ad2bca8b-4e14-4e69-9a90-088a3711a640
+# ╟─88a4519b-f415-455b-b002-107ac8d2f5e4
+# ╟─ad2bca8b-4e14-4e69-9a90-088a3711a640
 # ╟─40b6e39c-f1d6-450b-858e-5b5daa708e8c
-# ╠═3e32918a-bc56-44cf-b089-45a3b314cd95
+# ╟─3e32918a-bc56-44cf-b089-45a3b314cd95
 # ╟─1d2b353e-4609-43a2-8c23-cdf78616e540
-# ╠═79fc5e68-3e60-4453-9e17-d43cc48804cd
+# ╟─79fc5e68-3e60-4453-9e17-d43cc48804cd
 # ╟─f8393998-36a0-4732-b3ad-e587815480cf
-# ╠═19784849-e55c-48d8-8ddf-1276b77e0da3
-# ╠═7b96555a-cd93-4611-8630-325292778ef5
-# ╠═ba29ad49-66d5-49ef-906b-81e743c0071b
-# ╠═f04e9fc4-b47c-499c-ba01-7980db2e2ea8
-# ╠═6b2ade46-c69b-4c20-aa71-7ded153ce950
-# ╠═b3f2fff2-1afb-40ad-9c6f-d1f632f0d0c5
+# ╟─19784849-e55c-48d8-8ddf-1276b77e0da3
+# ╟─25a9ce74-3079-4041-b93d-dcb4f85c9a12
+# ╟─0388e1ba-10c0-458f-a4ca-ea19859d5f55
+# ╟─614bdaa3-b61b-4105-9676-e1d66838c323
+# ╟─5811e125-15bf-454d-b49b-5ad41d7c6251
+# ╟─91f3348f-e1f2-4eec-8431-5adb81c2c2aa
+# ╟─1107d3d3-d031-4c81-9de4-74d74b06acdb
+# ╟─902164ef-0a58-4510-8769-d9e35fd3f530
+# ╠═3b0ed07c-bdfd-4e78-9a50-a053c7f4f4e6
+# ╟─fe7bf21d-539c-4bb5-be07-26621ead740d
+# ╟─6d838d17-ccaf-4009-8a12-057a11faf896
+# ╟─24062396-0403-4ea2-87de-c2b22d6f0e28
+# ╟─266a6922-1aaa-4f41-b13a-1cc2b4213747
+# ╟─61f52b52-9706-4332-8f67-40be8af4a240
+# ╟─dc106d6a-d60f-40fe-a811-f360c06afb88
+# ╟─c525cc41-a666-4562-ab9e-affd3287cea9
+# ╟─456734f1-872f-4d42-aaa2-eed8b9df6919
+# ╠═71f9be86-f953-44ba-bcea-4bde8d74f6c8
+# ╟─97fc8d89-b315-43c4-987e-245eb909beca
+# ╠═7781b837-4651-4cac-9a5c-52bcc9fa576b
+# ╟─c3f434f2-ae12-415a-a9a0-2282401abcc4
+# ╟─387e458a-5a07-4868-bf4c-bcae41dfc5f5
+# ╟─933a85e4-5fca-4f89-af94-92b353791ea6
+# ╟─12d7dbc0-3df8-487d-9fe8-b9b33b0483ed
+# ╟─778651c3-a323-4f7f-b99d-5124f86cc1f8
+# ╟─d6b8a882-8489-4307-9703-6038de351182
+# ╟─03ea6d04-af87-43ac-9306-0382215bb836
+# ╟─b3f2fff2-1afb-40ad-9c6f-d1f632f0d0c5
 # ╠═d5ec173d-5616-4454-9ffd-2f5dd4c4c740
 # ╠═d4ade6ee-4cb5-48e9-9b08-440df38c1099
-# ╠═1bcbcc8d-4691-475b-9cf5-e03dfc4a5327
-# ╠═f2384175-9dc5-4b0f-af7f-14555d57e5b8
-# ╠═d8adafcf-ec8e-4647-bb4d-10eafb06e108
+# ╟─f2384175-9dc5-4b0f-af7f-14555d57e5b8
 # ╠═b64a2fb8-67e3-4c6a-b32a-65ea127820b3
-# ╠═eacdd4d7-bfae-4d9e-b4f6-603c7f2f1ff5
+# ╠═a1750610-34ed-4976-b3c8-535f192d1d7f
+# ╠═e8992b80-e759-414e-92ab-cb1edc123ff5
+# ╟─eacdd4d7-bfae-4d9e-b4f6-603c7f2f1ff5
 # ╠═21602232-81e4-4506-8c3d-a17ada27e78f
 # ╠═65c3f9ba-0ee9-4574-aaff-d41b21764577
-# ╠═6b0b3ab1-4eef-4c3f-b61b-062e1d703b1d
 # ╠═87f9da53-d498-4991-b3d2-fa50397706f7
+# ╠═34e418ae-1c0a-45a5-8120-3e00ae1214ca
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
