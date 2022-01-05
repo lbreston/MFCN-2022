@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.17.5
+# v0.17.4
 
 using Markdown
 using InteractiveUtils
@@ -69,16 +69,8 @@ These spike trains represent recordings from monkey motor cortex during a reachi
 **What is the angle between the reaches in these two trials**?
 """
 
-# ╔═╡ 19784849-e55c-48d8-8ddf-1276b77e0da3
-
-TwoColumn( Resource(
-	p1=Population(8, 50)
-	stimulate!(p1, [1 1 1], 0:.01:1)
-	pl1=spikeraster(p1)
-	stimulate!(p1, [1 0 0], 0:.01:1)
-	pl2=spikeraster(p1)
-	plot(pl1,pl2)
-end
+# ╔═╡ 7b96555a-cd93-4611-8630-325292778ef5
+ Resource("https://github.com/lbreston/MFCN-2022/blob/main/artifacts/monkeyreach.png")
 
 # ╔═╡ ba29ad49-66d5-49ef-906b-81e743c0071b
 TwoColumn(md"Note the kink at ``x=0``!", plot(-5:5, abs))
@@ -185,6 +177,19 @@ begin
 
 end
 		
+
+# ╔═╡ 19784849-e55c-48d8-8ddf-1276b77e0da3
+
+TwoColumn( Resource("https://github.com/lbreston/MFCN-2022/blob/main/artifacts/monkeyreach.png"), let
+												p1=Population(8, 50)
+												stimulate!(p1, [1 1 1], 0:.01:1)
+												pl1=spikeraster(p1)
+												stimulate!(p1, [1 0 0], 0:.01:1)
+												pl2=spikeraster(p1)
+												plot(pl1,pl2)
+											end
+)
+
 
 # ╔═╡ d8adafcf-ec8e-4647-bb4d-10eafb06e108
 mke.set_theme!()
@@ -1611,6 +1616,7 @@ version = "0.9.1+5"
 # ╠═79fc5e68-3e60-4453-9e17-d43cc48804cd
 # ╟─f8393998-36a0-4732-b3ad-e587815480cf
 # ╠═19784849-e55c-48d8-8ddf-1276b77e0da3
+# ╠═7b96555a-cd93-4611-8630-325292778ef5
 # ╠═ba29ad49-66d5-49ef-906b-81e743c0071b
 # ╠═f04e9fc4-b47c-499c-ba01-7980db2e2ea8
 # ╠═6b2ade46-c69b-4c20-aa71-7ded153ce950
